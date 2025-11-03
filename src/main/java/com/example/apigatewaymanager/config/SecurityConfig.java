@@ -81,12 +81,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * API Gateway Security Configuration with Keycloak
- *
- * This gateway acts as a reverse proxy with JWT validation
- * All downstream services trust the same Keycloak realm
- */
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -107,12 +102,13 @@ public class SecurityConfig {
                                 "/actuator/info",
                                 // Auth endpoints (login, register, etc.)
                                 "/api/auth/login",
-                                "/api/auth/register",
+                                "/api/auth/signup",
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 // Public property browsing
-                                "/api/v1/properties/public/**",
+                                "/api/v1/properties/**",
                                 "/api/v1/properties/search",
+                                "/api/notifications/**",
                                 // Confirmation endpoints
                                 "/api/v1/appointments/confirm-by-token/**",
                                 "/api/bookings/confirm/**"
@@ -138,10 +134,9 @@ public class SecurityConfig {
         return converter;
     }
 
-    /**
-     * Extract roles from Keycloak JWT token
-     * CRITICAL: Private method to avoid Spring MVC converter registration
-     */
+
+     //Extract roles from Keycloak JWT token
+     //   CRITICAL: Private method to avoid Spring MVC converter registration
     private Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter() {
         return jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();

@@ -1,0 +1,49 @@
+{
+  "name": "k6-performance-tests",
+  "version": "1.0.0",
+  "description": "K6 Performance Tests for Friendly Housing Microservices",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:quick": "k6 run scenarios/quick-test.js",
+    "test:smoke": "k6 run scenarios/smoke-test.js",
+    "test:fast": "k6 run scenarios/fast-load-test.js",
+    "test:load": "k6 run scenarios/load-test.js",
+    "test:stress": "k6 run scenarios/stress-test.js",
+    "test:spike": "k6 run scenarios/spike-test.js",
+    "test:soak": "k6 run scenarios/soak-test.js",
+    "test:notification": "k6 run tests/05-notification-service.test.js",
+    "test:all": "npm run test:quick && npm run test:smoke && npm run test:notification",
+    "test": "npm run test:all",
+
+    "health:quick": "powershell -ExecutionPolicy Bypass -File scripts/quick-health-check.ps1",
+    "health:full": "powershell -ExecutionPolicy Bypass -File scripts/test-all-services.ps1",
+    "health": "npm run health:quick",
+
+    "circuits:test": "powershell -ExecutionPolicy Bypass -File scripts/test-circuits-breakers.ps1",
+    "circuit:status": "curl -s http://localhost:8085/api/circuit-breaker/status",
+    "circuit:commands": "powershell -ExecutionPolicy Bypass -File scripts/circuit-breaker-commands.ps1",
+
+    "fix:springboot": "powershell -ExecutionPolicy Bypass -File scripts/fix-spring-boot-version.ps1",
+
+    "run:all": "powershell -ExecutionPolicy Bypass -File scripts/run-all-tests.ps1",
+
+    "services:health": "npm run health:quick",
+    "services:test": "npm run health:full",
+
+    "perf:diagnose": "powershell -ExecutionPolicy Bypass -File scripts/diagnose-performance.ps1"
+  },
+  "keywords": [
+    "k6",
+    "performance",
+    "load-testing",
+    "microservices",
+    "circuit-breaker",
+    "resilience4j",
+    "health-check"
+  ],
+  "author": "Friendly Housing Team",
+  "license": "ISC"
+}

@@ -1,76 +1,60 @@
 // utils/auth.js
-
 import http from 'k6/http';
 import { check } from 'k6';
 import { config } from '../config/gateway.config.js';
 
 /**
- * Login and get JWT token
+ * Login to Keycloak and return access token
+ * @param {string} username
+ * @param {string} password
+ * @returns {string|null} access token
  */
 export function login(username, password) {
-    const url = `${config.gatewayUrl}${config.endpoints.auth}/login`;
+    const url = `${config.keycloak.url}/realms/${config.keycloak.realm}/protocol/openid-connect/token`;
 
-    const payload = JSON.stringify({
-        username: username,
-        password: password,
-    });
-
-    const params = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        tags: { endpoint: 'auth' },
+    const payload = {
+        grant_type: 'password', // Important for password login
+        client_id: config.keycloak.clientId,
+        client_secret: config.keycloak.clientSecret,
+        username,
+        password,
     };
 
-    const response = http.post(url, payload, params);
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
 
-    const success = check(response, {
-        'login successful': (r) => r.status === 200,
-        'token received': (r) => {
-            try {
-                const body = JSON.parse(r.body);
-                return body.token !== undefined;
-            } catch {
-                return false;
-            }
-        },
-    });
+    // Convert payload to URL-encoded string
+    const body = Object.entries(payload)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+        .join('&');
 
-    if (success && response.status === 200) {
-        const body = JSON.parse(response.body);
-        return body.token;
+    const res = http.post(url, body, { headers });
+
+    if (res.status !== 200) {
+        console.error(`❌ Login failed for ${username}: ${res.status} - ${res.body}`);
+        return null;
     }
 
-    console.error(`Login failed for ${username}:`, response.status, response.body);
-    return null;
+    const token = JSON.parse(res.body).access_token;
+    check(token, { 'has access token': t => t !== undefined });
+    return token;
 }
 
 /**
- * Get authorization headers with JWT token
+ * Setup a test user and return headers for requests
+ * @param {object} user - { username, password, email }
+ * @returns {object} { headers }
  */
-export function getAuthHeaders(token) {
-    return {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    };
-}
-
-/**
- * Setup authentication for a specific user type
- */
-export function setupUser(userType = 'student') {
-    const user = config.testUsers[userType];
+export function setupUser(user) {
     const token = login(user.username, user.password);
-
     if (!token) {
-        throw new Error(`Failed to authenticate as ${userType}`);
+        throw new Error(`Failed to setup user ${user.username}`);
     }
 
+    // Return headers for authenticated requests
     return {
-        token: token,
-        headers: getAuthHeaders(token),
-        user: user,
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
     };
 }
