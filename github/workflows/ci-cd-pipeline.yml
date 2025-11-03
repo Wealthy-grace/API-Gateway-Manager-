@@ -56,8 +56,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./gradlew build jacocoTestReport sonar --info \
-            -Dsonar.projectKey=your-github-username_Api-Gateway-Manager \
-            -Dsonar.organization=your-sonarcloud-org
+            -Dsonar.projectKey=Wealthy-grace_API-Gateway-Manager- \
+            -Dsonar.organization=wealthy-grace
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
