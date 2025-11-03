@@ -75,7 +75,7 @@ jacocoTestReport {
 // SonarQube Configuration
 sonar {
     properties {
-        property "sonar.projectKey", "Wealthy-grace_API-Gateway-Manager-"
+        property "sonar.projectKey", "API-Gateway-Manager-"
         property "sonar.organization", "wealthy-grace"
         property "sonar.projectName", "API-Gateway-Manager"
         property "sonar.host.url", "https://sonarcloud.io"

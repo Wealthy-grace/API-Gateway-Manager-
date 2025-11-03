@@ -55,9 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./gradlew build jacocoTestReport sonar --info \
-            -Dsonar.projectKey=Wealthy-grace_API-Gateway-Manager- \
-            -Dsonar.organization=wealthy-grace
+          ./gradlew build jacocoTestReport sonar --info
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
@@ -132,7 +130,7 @@ jobs:
             --network shared-microservices-network \
             -p 8090:8090 \
             -e KEYCLOAK_ADMIN=admin \
-            -e KEYCLOAK_ADMIN_PASSWORD=admin \
+            -e KEYCLOAK_ADMIN_PASSWORD=admin123 \
             -e KC_HTTP_PORT=8090 \
             -e KC_HOSTNAME_STRICT=false \
             -e KC_HTTP_ENABLED=true \
@@ -147,7 +145,7 @@ jobs:
         run: |
           ADMIN_TOKEN=$(curl -s -X POST http://localhost:8090/realms/master/protocol/openid-connect/token \
             -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "username=admin&password=admin&grant_type=password&client_id=admin-cli" | jq -r '.access_token')
+            -d "username=admin&password=admin123&grant_type=password&client_id=admin-cli" | jq -r '.access_token')
           
           curl -s -X POST http://localhost:8090/admin/realms \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
