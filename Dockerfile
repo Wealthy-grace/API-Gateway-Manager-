@@ -3,7 +3,7 @@
 # ==========================================
 
 # Stage 1: Build
-FROM gradle:8.5-jdk21 AS build
+FROM gradle:8.5-jdk17 AS build
 
 WORKDIR /app
 
@@ -12,6 +12,9 @@ COPY gradle gradle
 COPY gradlew .
 COPY settings.gradle .
 COPY build.gradle .
+
+# Grant execute permission for gradlew
+RUN chmod +x gradlew
 
 # Download dependencies (cache layer)
 RUN ./gradlew dependencies --no-daemon
@@ -23,7 +26,7 @@ COPY src ./src
 RUN ./gradlew clean bootJar --no-daemon
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
