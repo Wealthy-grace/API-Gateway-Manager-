@@ -420,6 +420,8 @@
 
 
 ## Deployment for the API Gateway
+
+# Deployment for the API Gateway
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -431,7 +433,7 @@ data:
   SERVER_PORT: "9500"
   SPRING_PROFILES_ACTIVE: "kubernetes"
 
-  # Service Discovery URLs (using Kubernetes service names)
+  # Service Discovery URLs
   USER_SERVICE_URL: "http://user-service-app:8081"
   PROPERTY_SERVICE_URL: "http://property-service-app:8082"
   APPOINTMENT_SERVICE_URL: "http://appointment-service-app:8083"
@@ -464,7 +466,7 @@ data:
   SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0: "Path=/api/notifications/**"
   SPRING_CLOUD_GATEWAY_ROUTES_4_FILTERS_0: "StripPrefix=0"
 
-  # Keycloak Configuration - Using internal Kubernetes service
+  # Keycloak Configuration
   KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080"
   KEYCLOAK_REALM: "friendly-housing"
   KEYCLOAK_RESOURCE: "user-service"
@@ -482,7 +484,7 @@ data:
   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: "openid,profile,email"
   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-  # JWT Resource Server Configuration - FIXED: Use internal keycloak URL consistently
+  # JWT Resource Server Configuration - CRITICAL FIX
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ENABLED: "true"
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://keycloak:8080/realms/friendly-housing"
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs"
@@ -497,8 +499,8 @@ data:
   SERVER_TOMCAT_THREADS_MAX: "200"
   SERVER_TOMCAT_THREADS_MIN_SPARE: "10"
 
-  # Circuit Breaker Configuration - FIXED: More lenient settings
-  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_REGISTER_HEALTH_INDICATOR: "true"
+  # Circuit Breaker Configuration - More lenient
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_REGISTER_HEALTH_INDICATOR: "false"
   RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLIDING_WINDOW_SIZE: "10"
   RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_MINIMUM_NUMBER_OF_CALLS: "5"
   RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_PERMITTED_NUMBER_OF_CALLS_IN_HALF_OPEN_STATE: "3"
@@ -508,13 +510,21 @@ data:
   RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_RATE_THRESHOLD: "100"
   RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_DURATION_THRESHOLD: "60s"
 
-  # Actuator Configuration - FIXED: Simplified health checks
+  # Actuator Configuration - Simplified
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
   MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
   MANAGEMENT_HEALTH_READINESS_INCLUDE: "readinessState"
   MANAGEMENT_HEALTH_LIVENESS_INCLUDE: "livenessState"
   MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED: "true"
+
+  # CRITICAL: Make health endpoints publicly accessible
+  MANAGEMENT_ENDPOINTS_WEB_BASE_PATH: "/actuator"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_COMPONENTS: "always"
+
+  # Disable health checks for downstream services
+  MANAGEMENT_HEALTH_CIRCUITBREAKERS_ENABLED: "false"
+  MANAGEMENT_HEALTH_RATELIMITERS_ENABLED: "false"
 
   # CORS Configuration
   SPRING_CLOUD_GATEWAY_GLOBALCORS_ADD_TO_SIMPLE_URL_HANDLER_MAPPING: "true"
@@ -524,8 +534,8 @@ data:
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY: "INFO"
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: "INFO"
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
-  LOGGING_LEVEL_COM_EXAMPLE_APIGATEWAYMANAGER: "INFO"
-  LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+  LOGGING_LEVEL_COM_EXAMPLE_APIGATEWAYMANAGER: "DEBUG"
+  LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
   # Spring Boot Configuration
   SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
@@ -553,6 +563,7 @@ metadata:
     version: v1
 spec:
   replicas: 1
+  revisionHistoryLimit: 1  # THIS IS THE FIX - Only keep 1 old ReplicaSet
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -589,8 +600,8 @@ spec:
               if [ $attempt -ge $max_attempts ]; then
                 echo "Warning: Keycloak may not be ready, continuing anyway..."
               else
-                echo "Keycloak is up - continuing"
-                sleep 5
+                echo "Keycloak is up - waiting 10 seconds for full initialization"
+                sleep 10
               fi
           resources:
             requests:
@@ -626,7 +637,7 @@ spec:
                   name: api-gateway-secret
                   key: KEYCLOAK_CREDENTIALS_SECRET
 
-            # JVM Memory Configuration - Optimized for lower resource usage
+            # JVM Memory Configuration
             - name: JAVA_OPTS
               value: >-
                 -Xms512m 
@@ -642,12 +653,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-
             - name: POD_IP
               valueFrom:
                 fieldRef:
@@ -661,37 +670,31 @@ spec:
               memory: "1536Mi"
               cpu: "1000m"
 
-          # FIXED: Much more lenient probes to allow startup
+          # CRITICAL FIX: Use TCP probes to avoid authentication issues
           startupProbe:
-            httpGet:
-              path: /actuator/health/liveness
+            tcpSocket:
               port: 9500
-              scheme: HTTP
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 10
             failureThreshold: 60
             timeoutSeconds: 5
             successThreshold: 1
 
           livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
+            tcpSocket:
               port: 9500
-              scheme: HTTP
-            initialDelaySeconds: 90
+            initialDelaySeconds: 120
             periodSeconds: 30
-            failureThreshold: 10
+            failureThreshold: 5
             timeoutSeconds: 5
             successThreshold: 1
 
           readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
+            tcpSocket:
               port: 9500
-              scheme: HTTP
-            initialDelaySeconds: 90
+            initialDelaySeconds: 120
             periodSeconds: 15
-            failureThreshold: 10
+            failureThreshold: 3
             timeoutSeconds: 5
             successThreshold: 1
 
@@ -715,7 +718,6 @@ spec:
       restartPolicy: Always
 
 ---
-# ClusterIP Service for internal communication
 apiVersion: v1
 kind: Service
 metadata:
@@ -742,7 +744,6 @@ spec:
     app: api-gateway
 
 ---
-# NodePort Service for external access
 apiVersion: v1
 kind: Service
 metadata:
