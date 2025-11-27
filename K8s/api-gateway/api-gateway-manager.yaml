@@ -1,0 +1,806 @@
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: api-gateway-config
+#  namespace: student-housing
+#data:
+#  # Application Settings
+#  SPRING_APPLICATION_NAME: "api-gateway-manager"
+#  SERVER_PORT: "9500"
+#  SPRING_PROFILES_ACTIVE: "kubernetes"
+#
+#  # Service Discovery URLs (using Kubernetes service names)
+#  USER_SERVICE_URL: "http://user-service-app:8081"
+#  PROPERTY_SERVICE_URL: "http://property-service-app:8082"
+#  APPOINTMENT_SERVICE_URL: "http://appointment-service-app:8083"
+#  BOOKING_SERVICE_URL: "http://booking-service-app:8084"
+#  NOTIFICATION_SERVICE_URL: "http://notification-service:8085"
+#
+#  # Gateway Routes Configuration
+#  SPRING_CLOUD_GATEWAY_ROUTES_0_ID: "user-service"
+#  SPRING_CLOUD_GATEWAY_ROUTES_0_URI: "http://user-service-app:8081"
+#  SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: "Path=/api/users/**,/api/auth/**,/api/internal/**"
+#  SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0: "StripPrefix=0"
+#
+#  SPRING_CLOUD_GATEWAY_ROUTES_1_ID: "property-service"
+#  SPRING_CLOUD_GATEWAY_ROUTES_1_URI: "http://property-service-app:8082"
+#  SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: "Path=/api/v1/properties/**"
+#  SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0: "StripPrefix=0"
+#
+#  SPRING_CLOUD_GATEWAY_ROUTES_2_ID: "appointment-service"
+#  SPRING_CLOUD_GATEWAY_ROUTES_2_URI: "http://appointment-service-app:8083"
+#  SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: "Path=/api/v1/appointments/**"
+#  SPRING_CLOUD_GATEWAY_ROUTES_2_FILTERS_0: "StripPrefix=0"
+#
+#  SPRING_CLOUD_GATEWAY_ROUTES_3_ID: "booking-service"
+#  SPRING_CLOUD_GATEWAY_ROUTES_3_URI: "http://booking-service-app:8084"
+#  SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0: "Path=/api/bookings/**"
+#  SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0: "StripPrefix=0"
+#
+#  SPRING_CLOUD_GATEWAY_ROUTES_4_ID: "notification-service"
+#  SPRING_CLOUD_GATEWAY_ROUTES_4_URI: "http://notification-service:8085"
+#  SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0: "Path=/api/notifications/**"
+#  SPRING_CLOUD_GATEWAY_ROUTES_4_FILTERS_0: "StripPrefix=0"
+#
+#  # Keycloak Configuration - Using internal Kubernetes service
+#  KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080"
+#  KEYCLOAK_REALM: "friendly-housing"
+#  KEYCLOAK_RESOURCE: "user-service"
+#
+#  # OAuth2 Client Configuration
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: "http://localhost:8080/realms/friendly-housing"
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: "http://localhost:8080/realms/friendly-housing/protocol/openid-connect/auth"
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/token"
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/userinfo"
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs"
+#  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_NAME_ATTRIBUTE: "preferred_username"
+#
+#  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: "user-service"
+#  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_AUTHORIZATION_GRANT_TYPE: "authorization_code"
+#  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: "openid,profile,email"
+#  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: "{baseUrl}/login/oauth2/code/{registrationId}"
+#
+#  # JWT Resource Server Configuration
+#  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ENABLED: "true"
+#  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8080/realms/friendly-housing"
+#  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs"
+#
+#  # Gateway HTTP Client Configuration
+#  SPRING_CLOUD_GATEWAY_HTTPCLIENT_POOL_MAX_CONNECTIONS: "500"
+#  SPRING_CLOUD_GATEWAY_HTTPCLIENT_CONNECT_TIMEOUT: "10000"
+#  SPRING_CLOUD_GATEWAY_HTTPCLIENT_RESPONSE_TIMEOUT: "30s"
+#  SPRING_CLOUD_GATEWAY_HTTPCLIENT_WIRETAP: "false"
+#
+#  # Server Configuration
+#  SERVER_TOMCAT_THREADS_MAX: "200"
+#  SERVER_TOMCAT_THREADS_MIN_SPARE: "10"
+#
+#  # Circuit Breaker Configuration
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_REGISTER_HEALTH_INDICATOR: "true"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLIDING_WINDOW_SIZE: "10"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_MINIMUM_NUMBER_OF_CALLS: "5"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_PERMITTED_NUMBER_OF_CALLS_IN_HALF_OPEN_STATE: "3"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_AUTOMATIC_TRANSITION_FROM_OPEN_TO_HALF_OPEN_ENABLED: "true"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_WAIT_DURATION_IN_OPEN_STATE: "10s"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_FAILURE_RATE_THRESHOLD: "50"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_RATE_THRESHOLD: "100"
+#  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_DURATION_THRESHOLD: "60s"
+#
+#  # Actuator Configuration - Fixed property names for Spring Boot 3.5+
+#  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+#  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+#  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+#  MANAGEMENT_HEALTH_READINESS_INCLUDE: "readinessState,ping"
+#  MANAGEMENT_HEALTH_LIVENESS_INCLUDE: "livenessState,ping"
+#  MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED: "true"
+#
+#  # CORS Configuration
+#  SPRING_CLOUD_GATEWAY_GLOBALCORS_ADD_TO_SIMPLE_URL_HANDLER_MAPPING: "true"
+#
+#  # Logging Configuration
+#  LOGGING_LEVEL_ROOT: "INFO"
+#  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY: "DEBUG"
+#  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: "DEBUG"
+#  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "DEBUG"
+#  LOGGING_LEVEL_COM_EXAMPLE_APIGATEWAYMANAGER: "DEBUG"
+#  LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+#
+#  # Spring Boot Configuration
+#  SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
+#  SPRING_CLOUD_COMPATIBILITY_VERIFIER_ENABLED: "false"
+#  # Removed SPRING_MAIN_WEB_APPLICATION_TYPE - let Spring Boot auto-detect
+#
+#---
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: api-gateway-secret
+#  namespace: student-housing
+#type: Opaque
+#stringData:
+#  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET: "AyTakhiHc4kaCoLgJR6liuYjmNduNjHb"
+#  KEYCLOAK_CREDENTIALS_SECRET: "AyTakhiHc4kaCoLgJR6liuYjmNduNjHb"
+#
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: api-gateway
+#  namespace: student-housing
+#  labels:
+#    app: api-gateway
+#    version: v1
+#spec:
+#  replicas: 1
+#  strategy:
+#    type: RollingUpdate
+#    rollingUpdate:
+#      maxSurge: 1
+#      maxUnavailable: 0
+#  selector:
+#    matchLabels:
+#      app: api-gateway
+#  template:
+#    metadata:
+#      labels:
+#        app: api-gateway
+#        version: v1
+#      annotations:
+#        prometheus.io/scrape: "true"
+#        prometheus.io/port: "9500"
+#        prometheus.io/path: "/actuator/prometheus"
+#    spec:
+#      initContainers:
+#        - name: wait-for-keycloak
+#          image: busybox:1.36
+#          command:
+#            - 'sh'
+#            - '-c'
+#            - |
+#              echo "Waiting for Keycloak to be ready..."
+#              max_attempts=60
+#              attempt=0
+#              until nc -z keycloak 8080 || [ $attempt -ge $max_attempts ]; do
+#                echo "Keycloak is unavailable - sleeping (attempt $attempt/$max_attempts)"
+#                sleep 3
+#                attempt=$((attempt + 1))
+#              done
+#              if [ $attempt -ge $max_attempts ]; then
+#                echo "Warning: Keycloak may not be ready, continuing anyway..."
+#              else
+#                echo "Keycloak is up - continuing"
+#              fi
+#          resources:
+#            requests:
+#              memory: "32Mi"
+#              cpu: "10m"
+#            limits:
+#              memory: "64Mi"
+#              cpu: "50m"
+#
+#        # FIXED: Removed booking-service dependency - let circuit breaker handle it
+#        - name: wait-for-core-services
+#          image: busybox:1.36
+#          command:
+#            - 'sh'
+#            - '-c'
+#            - |
+#              echo "Waiting for core backend services..."
+#
+#              max_attempts=60
+#              attempt=0
+#
+#              # Wait for user-service (critical)
+#              until nc -z user-service-app 8081 || [ $attempt -ge $max_attempts ]; do
+#                echo "User service unavailable - sleeping (attempt $attempt/$max_attempts)"
+#                sleep 3
+#                attempt=$((attempt + 1))
+#              done
+#
+#              if [ $attempt -lt $max_attempts ]; then
+#                echo "User service is up"
+#              else
+#                echo "Warning: User service may not be ready"
+#              fi
+#
+#              echo "Core services check complete - API Gateway will start"
+#              echo "Note: Booking service will be checked via circuit breaker"
+#          resources:
+#            requests:
+#              memory: "32Mi"
+#              cpu: "10m"
+#            limits:
+#              memory: "64Mi"
+#              cpu: "50m"
+#
+#      containers:
+#        - name: api-gateway
+#          image: api-gateway-manager:latest
+#          imagePullPolicy: IfNotPresent
+#          ports:
+#            - containerPort: 9500
+#              name: http
+#              protocol: TCP
+#
+#          envFrom:
+#            - configMapRef:
+#                name: api-gateway-config
+#
+#          env:
+#            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+#              valueFrom:
+#                secretKeyRef:
+#                  name: api-gateway-secret
+#                  key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+#
+#            - name: KEYCLOAK_CREDENTIALS_SECRET
+#              valueFrom:
+#                secretKeyRef:
+#                  name: api-gateway-secret
+#                  key: KEYCLOAK_CREDENTIALS_SECRET
+#
+#            # JVM Memory Configuration
+#            - name: JAVA_OPTS
+#              value: >-
+#                -Xms512m
+#                -Xmx1024m
+#                -XX:+UseG1GC
+#                -XX:MaxGCPauseMillis=200
+#                -XX:+HeapDumpOnOutOfMemoryError
+#                -XX:HeapDumpPath=/tmp/heapdump.hprof
+#                -Djava.security.egd=file:/dev/./urandom
+#
+#            # Pod Information
+#            - name: POD_NAME
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: metadata.name
+#
+#            - name: POD_NAMESPACE
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: metadata.namespace
+#
+#            - name: POD_IP
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: status.podIP
+#
+#          resources:
+#            requests:
+#              memory: "768Mi"
+#              cpu: "250m"
+#            limits:
+#              memory: "1536Mi"
+#              cpu: "1000m"
+#
+#          # FIXED: More lenient probe settings
+#          startupProbe:
+#            httpGet:
+#              path: /actuator/health/liveness
+#              port: 9500
+#              scheme: HTTP
+#            initialDelaySeconds: 45
+#            periodSeconds: 10
+#            failureThreshold: 40
+#            timeoutSeconds: 5
+#            successThreshold: 1
+#
+#          livenessProbe:
+#            httpGet:
+#              path: /actuator/health/liveness
+#              port: 9500
+#              scheme: HTTP
+#            initialDelaySeconds: 30
+#            periodSeconds: 20
+#            failureThreshold: 5
+#            timeoutSeconds: 5
+#            successThreshold: 1
+#
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health/readiness
+#              port: 9500
+#              scheme: HTTP
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            failureThreshold: 5
+#            timeoutSeconds: 5
+#            successThreshold: 1
+#
+#          volumeMounts:
+#            - name: logs
+#              mountPath: /logs
+#            - name: tmp
+#              mountPath: /tmp
+#
+#      volumes:
+#        - name: logs
+#          emptyDir: {}
+#        - name: tmp
+#          emptyDir: {}
+#
+#      securityContext:
+#        runAsNonRoot: false
+#        fsGroup: 1000
+#
+#      dnsPolicy: ClusterFirst
+#      restartPolicy: Always
+#
+#---
+## ClusterIP Service for internal communication
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: api-gateway
+#  namespace: student-housing
+#  labels:
+#    app: api-gateway
+#  annotations:
+#    prometheus.io/scrape: "true"
+#    prometheus.io/port: "9500"
+#    prometheus.io/path: "/actuator/prometheus"
+#spec:
+#  type: ClusterIP
+#  sessionAffinity: ClientIP
+#  sessionAffinityConfig:
+#    clientIP:
+#      timeoutSeconds: 10800
+#  ports:
+#    - name: http
+#      port: 9500
+#      targetPort: 9500
+#      protocol: TCP
+#  selector:
+#    app: api-gateway
+#
+#---
+## NodePort Service for external access
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: api-gateway-nodeport
+#  namespace: student-housing
+#  labels:
+#    app: api-gateway
+#spec:
+#  type: NodePort
+#  ports:
+#    - name: http
+#      port: 9500
+#      targetPort: 9500
+#      nodePort: 30950
+#      protocol: TCP
+#  selector:
+#    app: api-gateway
+#
+#---
+#apiVersion: autoscaling/v2
+#kind: HorizontalPodAutoscaler
+#metadata:
+#  name: api-gateway-hpa
+#  namespace: student-housing
+#spec:
+#  scaleTargetRef:
+#    apiVersion: apps/v1
+#    kind: Deployment
+#    name: api-gateway
+#  minReplicas: 1
+#  maxReplicas: 3
+#  metrics:
+#    - type: Resource
+#      resource:
+#        name: cpu
+#        target:
+#          type: Utilization
+#          averageUtilization: 70
+#    - type: Resource
+#      resource:
+#        name: memory
+#        target:
+#          type: Utilization
+#          averageUtilization: 80
+#  behavior:
+#    scaleDown:
+#      stabilizationWindowSeconds: 300
+#      policies:
+#        - type: Percent
+#          value: 50
+#          periodSeconds: 60
+#    scaleUp:
+#      stabilizationWindowSeconds: 0
+#      policies:
+#        - type: Percent
+#          value: 100
+#          periodSeconds: 30
+#        - type: Pods
+#          value: 2
+#          periodSeconds: 30
+#      selectPolicy: Max
+
+
+## Deployment for the API Gateway
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: student-housing
+data:
+  # Application Settings
+  SPRING_APPLICATION_NAME: "api-gateway-manager"
+  SERVER_PORT: "9500"
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+
+  # Service Discovery URLs (using Kubernetes service names)
+  USER_SERVICE_URL: "http://user-service-app:8081"
+  PROPERTY_SERVICE_URL: "http://property-service-app:8082"
+  APPOINTMENT_SERVICE_URL: "http://appointment-service-app:8083"
+  BOOKING_SERVICE_URL: "http://booking-service-app:8084"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8085"
+
+  # Gateway Routes Configuration
+  SPRING_CLOUD_GATEWAY_ROUTES_0_ID: "user-service"
+  SPRING_CLOUD_GATEWAY_ROUTES_0_URI: "http://user-service-app:8081"
+  SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: "Path=/api/users/**,/api/auth/**,/api/internal/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0: "StripPrefix=0"
+
+  SPRING_CLOUD_GATEWAY_ROUTES_1_ID: "property-service"
+  SPRING_CLOUD_GATEWAY_ROUTES_1_URI: "http://property-service-app:8082"
+  SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: "Path=/api/v1/properties/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0: "StripPrefix=0"
+
+  SPRING_CLOUD_GATEWAY_ROUTES_2_ID: "appointment-service"
+  SPRING_CLOUD_GATEWAY_ROUTES_2_URI: "http://appointment-service-app:8083"
+  SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: "Path=/api/v1/appointments/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_2_FILTERS_0: "StripPrefix=0"
+
+  SPRING_CLOUD_GATEWAY_ROUTES_3_ID: "booking-service"
+  SPRING_CLOUD_GATEWAY_ROUTES_3_URI: "http://booking-service-app:8084"
+  SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0: "Path=/api/bookings/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0: "StripPrefix=0"
+
+  SPRING_CLOUD_GATEWAY_ROUTES_4_ID: "notification-service"
+  SPRING_CLOUD_GATEWAY_ROUTES_4_URI: "http://notification-service:8085"
+  SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0: "Path=/api/notifications/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_4_FILTERS_0: "StripPrefix=0"
+
+  # Keycloak Configuration - Using internal Kubernetes service
+  KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080"
+  KEYCLOAK_REALM: "friendly-housing"
+  KEYCLOAK_RESOURCE: "user-service"
+
+  # OAuth2 Client Configuration
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI: "http://keycloak:8080/realms/friendly-housing"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/auth"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/token"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/userinfo"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs"
+  SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_NAME_ATTRIBUTE: "preferred_username"
+
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: "user-service"
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_AUTHORIZATION_GRANT_TYPE: "authorization_code"
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: "openid,profile,email"
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+  # JWT Resource Server Configuration - FIXED: Use internal keycloak URL consistently
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ENABLED: "true"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://keycloak:8080/realms/friendly-housing"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs"
+
+  # Gateway HTTP Client Configuration
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_POOL_MAX_CONNECTIONS: "500"
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_CONNECT_TIMEOUT: "10000"
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_RESPONSE_TIMEOUT: "30s"
+  SPRING_CLOUD_GATEWAY_HTTPCLIENT_WIRETAP: "false"
+
+  # Server Configuration
+  SERVER_TOMCAT_THREADS_MAX: "200"
+  SERVER_TOMCAT_THREADS_MIN_SPARE: "10"
+
+  # Circuit Breaker Configuration - FIXED: More lenient settings
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_REGISTER_HEALTH_INDICATOR: "true"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLIDING_WINDOW_SIZE: "10"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_MINIMUM_NUMBER_OF_CALLS: "5"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_PERMITTED_NUMBER_OF_CALLS_IN_HALF_OPEN_STATE: "3"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_AUTOMATIC_TRANSITION_FROM_OPEN_TO_HALF_OPEN_ENABLED: "true"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_WAIT_DURATION_IN_OPEN_STATE: "10s"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_FAILURE_RATE_THRESHOLD: "80"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_RATE_THRESHOLD: "100"
+  RESILIENCE4J_CIRCUITBREAKER_CONFIGS_DEFAULT_SLOW_CALL_DURATION_THRESHOLD: "60s"
+
+  # Actuator Configuration - FIXED: Simplified health checks
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_HEALTH_READINESS_INCLUDE: "readinessState"
+  MANAGEMENT_HEALTH_LIVENESS_INCLUDE: "livenessState"
+  MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED: "true"
+
+  # CORS Configuration
+  SPRING_CLOUD_GATEWAY_GLOBALCORS_ADD_TO_SIMPLE_URL_HANDLER_MAPPING: "true"
+
+  # Logging Configuration
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
+  LOGGING_LEVEL_COM_EXAMPLE_APIGATEWAYMANAGER: "INFO"
+  LOGGING_PATTERN_CONSOLE: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+  # Spring Boot Configuration
+  SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: "true"
+  SPRING_CLOUD_COMPATIBILITY_VERIFIER_ENABLED: "false"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-gateway-secret
+  namespace: student-housing
+type: Opaque
+stringData:
+  SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET: "AyTakhiHc4kaCoLgJR6liuYjmNduNjHb"
+  KEYCLOAK_CREDENTIALS_SECRET: "AyTakhiHc4kaCoLgJR6liuYjmNduNjHb"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: student-housing
+  labels:
+    app: api-gateway
+    version: v1
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9500"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.36
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              echo "Waiting for Keycloak to be ready..."
+              max_attempts=30
+              attempt=0
+              until nc -z keycloak 8080 || [ $attempt -ge $max_attempts ]; do
+                echo "Keycloak is unavailable - sleeping (attempt $attempt/$max_attempts)"
+                sleep 2
+                attempt=$((attempt + 1))
+              done
+              if [ $attempt -ge $max_attempts ]; then
+                echo "Warning: Keycloak may not be ready, continuing anyway..."
+              else
+                echo "Keycloak is up - continuing"
+                sleep 5
+              fi
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+
+      containers:
+        - name: api-gateway
+          image: api-gateway-manager:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9500
+              name: http
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: api-gateway-config
+
+          env:
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secret
+                  key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+
+            - name: KEYCLOAK_CREDENTIALS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secret
+                  key: KEYCLOAK_CREDENTIALS_SECRET
+
+            # JVM Memory Configuration - Optimized for lower resource usage
+            - name: JAVA_OPTS
+              value: >-
+                -Xms512m 
+                -Xmx1024m 
+                -XX:+UseG1GC 
+                -XX:MaxGCPauseMillis=200 
+                -XX:+HeapDumpOnOutOfMemoryError 
+                -XX:HeapDumpPath=/tmp/heapdump.hprof
+                -Djava.security.egd=file:/dev/./urandom
+
+            # Pod Information
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+
+          resources:
+            requests:
+              memory: "768Mi"
+              cpu: "200m"
+            limits:
+              memory: "1536Mi"
+              cpu: "1000m"
+
+          # FIXED: Much more lenient probes to allow startup
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9500
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 60
+            timeoutSeconds: 5
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9500
+              scheme: HTTP
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9500
+              scheme: HTTP
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            failureThreshold: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: logs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+
+      securityContext:
+        runAsNonRoot: false
+        fsGroup: 1000
+
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+
+---
+# ClusterIP Service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: student-housing
+  labels:
+    app: api-gateway
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9500"
+    prometheus.io/path: "/actuator/prometheus"
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    - name: http
+      port: 9500
+      targetPort: 9500
+      protocol: TCP
+  selector:
+    app: api-gateway
+
+---
+# NodePort Service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-nodeport
+  namespace: student-housing
+  labels:
+    app: api-gateway
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 9500
+      targetPort: 9500
+      nodePort: 30950
+      protocol: TCP
+  selector:
+    app: api-gateway
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: student-housing
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+      selectPolicy: Max

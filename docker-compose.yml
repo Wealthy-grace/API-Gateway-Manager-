@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # API GATEWAY (Port 9500)
+  # API GATEWAY (Port 9500) - FIXED
   # ==========================================
   api-gateway:
     image: eclipse-temurin:21-jre-alpine
@@ -10,35 +10,47 @@ services:
       - ./build/libs:/app
     command: sh -c "apk add --no-cache curl && java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=docker -jar /app/Api-Gateway-Manager-0.0.1-SNAPSHOT.jar"
     environment:
-      # Service URLs (using actual container names from your running services)
+      # Service URLs
       USER_SERVICE_URL: http://user-service-app:8081
       PROPERTY_SERVICE_URL: http://property-service-app:8082
       APPOINTMENT_SERVICE_URL: http://appointment-service-app:8083
-      BOOKING_SERVICE_URL: http://booking-service:8084
+      BOOKING_SERVICE_URL: http://booking-service-app:8084
       NOTIFICATION_SERVICE_URL: http://notification-service:8085
 
-      # Override application.properties with Docker-friendly URLs
+      # Gateway Routes
       SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://user-service-app:8081
       SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://property-service-app:8082
       SPRING_CLOUD_GATEWAY_ROUTES_2_URI: http://appointment-service-app:8083
-      SPRING_CLOUD_GATEWAY_ROUTES_3_URI: http://booking-service:8084
+      SPRING_CLOUD_GATEWAY_ROUTES_3_URI: http://booking-service-app:8084
       SPRING_CLOUD_GATEWAY_ROUTES_4_URI: http://notification-service:8085
 
-      # Keycloak Client Configuration
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: friendly-housing-client
+      # ===== CRITICAL FIX: Use SAME client as frontend =====
+      #SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID: user-service
+      # Keycloak Admin Client Configuration - Use keycloak:8080 for internal Docker communication
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: friendly-housing
+      KEYCLOAK_RESOURCE: api-gateway-manager
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET: Lrf6ZwUcAqOnvg4fl89kKyiOLCaWDb6B
+
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_AUTHORIZATION_GRANT_TYPE: authorization_code
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_SCOPE: openid,profile,email
 
-      # Keycloak Provider URLs (Manual configuration to avoid issuer mismatch)
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/auth
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/token
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/userinfo
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/certs
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_NAME_ATTRIBUTE: preferred_username
+      # Keycloak Provider URLs (using host.docker.internal for container-to-host communication)
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8080/realms/friendly-housing
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/friendly-housing/protocol/openid-connect/certs
+
+      #      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/auth
+#      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/token
+#      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/userinfo
+#      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/certs
+#      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_NAME_ATTRIBUTE: preferred_username
 
       # Resource Server JWT Configuration
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/certs
+      #SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://host.docker.internal:8090/realms/friendly-housing/protocol/openid-connect/certs
+
+      # Performance Settings
+      SPRING_CLOUD_GATEWAY_HTTPCLIENT_POOL_MAX_CONNECTIONS: 500
+      SERVER_TOMCAT_THREADS_MAX: 200
 
       SERVER_PORT: 9500
     ports:

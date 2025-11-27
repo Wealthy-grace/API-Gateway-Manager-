@@ -98,8 +98,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Public endpoints - NO authentication required
                         .requestMatchers(
-                                "/actuator/health",
+
+                                "/actuator/**",           // ✅ FIXED: Allows ALL actuator endpoints including health/liveness
+                                "/actuator/health",       // ✅ Base health endpoint
+                                "/actuator/health/**",    // ✅ All health sub-endpoints
                                 "/actuator/info",
+                                "/actuator/health/liveness",   // ← ADD THIS
+                                "/actuator/health/readiness",  // ← ADD THIS
+                                "/actuator/prometheus",
+                                "/actuator/metrics",
+                                "/actuator/metrics/**",
                                 // Auth endpoints (login, register, etc.)
                                 "/api/auth/login",
                                 "/api/auth/signup",
@@ -183,8 +191,13 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "http://localhost:5174",
                 "http://localhost:3000",
-                "http://localhost:4173"
+                "http://localhost:4173",
+                "http://frontend",                 // Docker container name
+                "http://frontend:80",              // Docker container with port
+                "http://host.docker.internal:5173", // From backend to frontend
+                "http://host.docker.internal:5174"  // ← ADD THIS
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -207,3 +220,5 @@ public class SecurityConfig {
         return source;
     }
 }
+
+

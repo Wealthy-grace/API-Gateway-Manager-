@@ -1,6 +1,5 @@
 // utils/helpers.js
-
-import { check } from 'k6';
+import { check, sleep } from 'k6';
 import { Rate, Trend, Counter } from 'k6/metrics';
 
 // Custom Metrics
@@ -32,7 +31,7 @@ export function makeRequest(httpFunc, url, payload, params, checkName) {
     });
 
     if (!checkResult) {
-        console.error(`❌ ${checkName} failed:`, response.status);
+        console.error(` ${checkName} failed:`, response.status);
     }
 
     return response;
@@ -42,6 +41,5 @@ export function makeRequest(httpFunc, url, payload, params, checkName) {
  * Random sleep to simulate user think time
  */
 export function thinkTime(min = 1, max = 3) {
-    const { sleep } = require('k6');
     sleep(Math.random() * (max - min) + min);
 }

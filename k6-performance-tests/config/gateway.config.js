@@ -5,26 +5,34 @@ export const config = {
 
     keycloak: {
         url: __ENV.KEYCLOAK_URL || 'http://localhost:8080',
-        realm: 'friendly-housing',
-        clientId: 'booking-service',
-        clientSecret: '39JGwi1wzcPzEXotI2z6igOIl4xGWSAm',
+        realm: __ENV.KEYCLOAK_REALM || 'friendly-housing',
+        clientId: __ENV.KEYCLOAK_CLIENT_ID || 'user-service',
+        // Set to empty string '' for PUBLIC clients
+        // Set to actual secret for CONFIDENTIAL clients
+        clientSecret: __ENV.KEYCLOAK_CLIENT_SECRET || '', // Try empty first for public client
+
+        // Alternative: If you know it's confidential, uncomment this:
+        // clientSecret: __ENV.KEYCLOAK_CLIENT_SECRET || 'w17mfIu8cNiHihx8hYZEHLkEkjEA1BIf',
     },
 
     testUsers: {
         student: {
-            username: 'jennifer275',
-            password: 'MeiChen@Edu4!',
-            email: 'Jenny_275@gmail.com'
+            username: __ENV.TEST_USER_STUDENT || 'jennifer275',
+            password: __ENV.TEST_PASS_STUDENT || 'MeiChen@Edu4!',
+            email: 'Jenny_275@gmail.com',
+            role: 'student'
         },
         property_manager: {
-            username: 'Stefan',
-            password: 'Stefan@227',
-            email: 'Jessica@friendly_house25.com'
+            username: __ENV.TEST_USER_PM || 'Stefan',
+            password: __ENV.TEST_PASS_PM || 'Stefan@227',
+            email: 'Jessica@friendly_house25.com',
+            role: 'property_manager'
         },
         admin: {
-            username: 'Jessica-Admin',
-            password: 'Admin@225',
-            email: 'Jessica@friendly_house25.com'
+            username: __ENV.TEST_USER_ADMIN || 'Jessica-Admin',
+            password: __ENV.TEST_PASS_ADMIN || 'Admin@225',
+            email: 'Jessica@friendly_house25.com',
+            role: 'admin'
         },
     },
 
@@ -35,7 +43,6 @@ export const config = {
         appointments: '/api/v1/appointments',
         bookings: '/api/bookings',
         notifications: '/api/notifications'
-
     },
 
     thresholds: {
@@ -44,28 +51,27 @@ export const config = {
         http_reqs: ['rate>5'],
     },
 
-    // ✅ NEW: Quick Test - 30 seconds (FASTEST)
     quickTest: {
         vus: 10,
         duration: '30s',
+        gracefulStop: '30s',
     },
 
-    // ✅ NEW: Fast Load Test - 2 minutes (FAST)
     fastLoadTest: {
         stages: [
-            { duration: '30s', target: 20 },   // Quick ramp to 20
-            { duration: '1m', target: 20 },    // Hold at 20
-            { duration: '30s', target: 0 },    // Quick ramp down
+            { duration: '30s', target: 20 },
+            { duration: '1m', target: 20 },
+            { duration: '30s', target: 0 },
         ],
+        gracefulStop: '10s',
     },
 
-    // ✅ EXISTING: Smoke Test - 1 minute (QUICK CHECK)
     smokeTest: {
         vus: 5,
-        duration: '1m'
+        duration: '1m',
+        gracefulStop: '10s',
     },
 
-    // ✅ EXISTING: Load Test - 16 minutes (FULL TEST)
     loadTest: {
         stages: [
             { duration: '2m', target: 20 },
@@ -74,9 +80,9 @@ export const config = {
             { duration: '5m', target: 50 },
             { duration: '2m', target: 0 },
         ],
+        gracefulStop: '30s',
     },
 
-    // ✅ EXISTING: Stress Test - 10 minutes
     stressTest: {
         stages: [
             { duration: '2m', target: 50 },
@@ -84,24 +90,25 @@ export const config = {
             { duration: '2m', target: 150 },
             { duration: '3m', target: 0 },
         ],
+        gracefulStop: '30s',
     },
 
-    // ✅ EXISTING: Spike Test - 2 minutes
     spikeTest: {
         stages: [
             { duration: '30s', target: 100 },
             { duration: '1m', target: 300 },
             { duration: '30s', target: 0 },
         ],
+        gracefulStop: '30s',
     },
 
-    // ✅ NEW: Soak Test - 30 minutes (STABILITY TEST)
     soakTest: {
         stages: [
-            { duration: '2m', target: 20 },     // Ramp up
-            { duration: '25m', target: 20 },    // Stay at load
-            { duration: '3m', target: 0 },      // Ramp down
+            { duration: '2m', target: 20 },
+            { duration: '25m', target: 20 },
+            { duration: '3m', target: 0 },
         ],
+        gracefulStop: '30s',
     },
 };
 

@@ -147,9 +147,9 @@ jobs:
 
       - name: Wait for Keycloak
         run: |
-          echo "⏳ Waiting for Keycloak to start..."
+          echo " Waiting for Keycloak to start..."
           timeout 180 bash -c 'until curl -s http://localhost:8090/realms/master/.well-known/openid-configuration > /dev/null; do echo "Waiting..."; sleep 5; done'
-          echo "✅ Keycloak is ready!"
+          echo " Keycloak is ready!"
           sleep 10  # Extra time for Keycloak to fully initialize
 
       - name: Configure Keycloak
@@ -162,11 +162,11 @@ jobs:
             -d "username=admin&password=admin123&grant_type=password&client_id=admin-cli" | jq -r '.access_token')
           
           if [ "$ADMIN_TOKEN" == "null" ] || [ -z "$ADMIN_TOKEN" ]; then
-            echo "❌ Failed to get admin token from Keycloak"
+            echo " Failed to get admin token from Keycloak"
             exit 1
           fi
           
-          echo "✅ Got admin token"
+          echo " Got admin token"
           
           # Create realm
           echo "Creating realm..."
@@ -202,7 +202,7 @@ jobs:
               "credentials":[{"type":"password","value":"MeiChen@Edu4!","temporary":false}]
             }' || echo "User might already exist"
           
-          echo "✅ Keycloak configuration complete"
+          echo " Keycloak configuration complete"
 
       - name: Start mock services
         run: |
@@ -228,9 +228,9 @@ jobs:
 
       - name: Wait for API Gateway
         run: |
-          echo "⏳ Waiting for API Gateway to start..."
+          echo " Waiting for API Gateway to start..."
           timeout 180 bash -c 'until curl -s http://localhost:9500/actuator/health | grep -q "UP"; do echo "Waiting..."; sleep 5; done'
-          echo "✅ API Gateway is ready!"
+          echo " API Gateway is ready!"
           sleep 5  # Extra time for full initialization
 
       - name: Install K6
@@ -254,10 +254,10 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: |
-          echo "🔍 API Gateway logs:"
+          echo " API Gateway logs:"
           docker logs api-gateway-manager || echo "API Gateway container not found"
           echo ""
-          echo "🔍 Keycloak logs:"
+          echo " Keycloak logs:"
           docker logs keycloak || echo "Keycloak container not found"
 
       - name: Cleanup

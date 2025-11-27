@@ -12,8 +12,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(
                         "http://localhost:5173",
+                        "http://localhost:5174",
                         "http://localhost:3000",
-                        "http://localhost:4173"
+                        "http://localhost:4173",
+                        "http://frontend",            // ← ADD THIS (Docker network)
+                        "http://frontend:80"          // ← ADD THIS (Docker network with port)
+
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
