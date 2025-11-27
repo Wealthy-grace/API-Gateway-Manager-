@@ -418,9 +418,7 @@
 #          periodSeconds: 30
 #      selectPolicy: Max
 
-
-## Deployment for the API Gateway
-
+# new version
 # Deployment for the API Gateway
 apiVersion: v1
 kind: ConfigMap
@@ -563,7 +561,7 @@ metadata:
     version: v1
 spec:
   replicas: 1
-  revisionHistoryLimit: 1  # THIS IS THE FIX - Only keep 1 old ReplicaSet
+  revisionHistoryLimit: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -637,7 +635,6 @@ spec:
                   name: api-gateway-secret
                   key: KEYCLOAK_CREDENTIALS_SECRET
 
-            # JVM Memory Configuration
             - name: JAVA_OPTS
               value: >-
                 -Xms512m 
@@ -648,7 +645,6 @@ spec:
                 -XX:HeapDumpPath=/tmp/heapdump.hprof
                 -Djava.security.egd=file:/dev/./urandom
 
-            # Pod Information
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -670,7 +666,6 @@ spec:
               memory: "1536Mi"
               cpu: "1000m"
 
-          # CRITICAL FIX: Use TCP probes to avoid authentication issues
           startupProbe:
             tcpSocket:
               port: 9500
