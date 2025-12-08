@@ -1,0 +1,33 @@
+# ============================================================================
+# API GATEWAY - SERVICE MONITOR FOR PROMETHEUS
+# ============================================================================
+# This ServiceMonitor tells Prometheus to scrape metrics from the API Gateway
+# Place this file in your k8s/ folder and apply it with:
+# kubectl apply -f api-gateway-servicemonitor.yaml
+# ============================================================================
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-gateway-monitor
+  namespace: student-housing
+  labels:
+    app: api-gateway
+    release: prometheus  # Important: must match your Helm release name
+spec:
+  # Select the service to monitor
+  selector:
+    matchLabels:
+      app: api-gateway
+
+  # Define the endpoints to scrape
+  endpoints:
+    - port: http              # Match the port name in your Service
+      path: /actuator/prometheus
+      interval: 30s           # Scrape every 30 seconds
+      scrapeTimeout: 10s
+
+  # Which namespaces to look for services in
+  namespaceSelector:
+    matchNames:
+      - student-housing

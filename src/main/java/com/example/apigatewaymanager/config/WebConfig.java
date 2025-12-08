@@ -4,6 +4,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web MVC Configuration
+ * Handles CORS for the MVC Gateway
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -15,13 +19,23 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:5174",
                         "http://localhost:3000",
                         "http://localhost:4173",
-                        "http://frontend",            // ← ADD THIS (Docker network)
-                        "http://frontend:80"          // ← ADD THIS (Docker network with port)
-
+                        "http://localhost:30173",           // Kubernetes NodePort
+                        "http://frontend",                  // Docker network
+                        "http://frontend:80",               // Docker network with port
+                        "http://host.docker.internal:5173", // Docker host access
+                        "http://host.docker.internal:5174"  // Docker host access
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("Authorization", "Content-Type")
+                .exposedHeaders(
+                        "Authorization",
+                        "Content-Type",
+                        "X-Requested-With",
+                        "Accept",
+                        "Origin",
+                        "Access-Control-Request-Method",
+                        "Access-Control-Request-Headers"
+                )
                 .allowCredentials(true)
                 .maxAge(3600);
     }

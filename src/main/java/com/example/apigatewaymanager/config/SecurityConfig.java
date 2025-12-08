@@ -388,21 +388,24 @@
 
 // version 3: TODO: Update to latest version
 
+
 package com.example.apigatewaymanager.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -410,99 +413,142 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Security Configuration for API Gateway (MVC Version)
+ * Works with both Docker and Kubernetes environments
+ */
 @Configuration
-@EnableWebSecurity  // NOT @EnableWebFluxSecurity
+@EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    private String jwkSetUri;
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
+        http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Actuator
+                        // Actuator endpoints - public
                         .requestMatchers("/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/health/liveness").permitAll()
+                        .requestMatchers("/actuator/health/readiness").permitAll()
                         .requestMatchers("/actuator/info").permitAll()
                         .requestMatchers("/actuator/prometheus").permitAll()
                         .requestMatchers("/actuator/metrics/**").permitAll()
+                        .requestMatchers("/actuator/gateway/**").permitAll()
+                        .requestMatchers("/actuator/routes/**").permitAll()
 
-                        // Auth endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Auth endpoints - public
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/signup").permitAll()
+                        .requestMatchers("/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/logout").permitAll()
 
                         // Public endpoints
                         .requestMatchers("/api/v1/properties/**").permitAll()
+                        .requestMatchers("/api/v1/properties/search").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers("/api/v1/appointments/confirm-by-token/**").permitAll()
                         .requestMatchers("/api/bookings/confirm/**").permitAll()
 
-                        // All others require auth
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                                .jwtAuthenticationConverter(grantedAuthoritiesExtractor())
+                                .decoder(jwtDecoder())
                         )
-                )
-                .build();
+                );
+
+        return http.build();
     }
 
+    /**
+     * Custom JWT Decoder - Uses property values for different environments
+     * Docker: http://keycloak:8080/...
+     * Kubernetes: http://keycloak.student-housing.svc.cluster.local:8080/...
+     */
     @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter());
-        converter.setPrincipalClaimName("preferred_username");
-        return converter;
+    public JwtDecoder jwtDecoder() {
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
+                .withJwkSetUri(jwkSetUri)
+                .build();
+
+        // CRITICAL: Accept tokens from localhost issuer
+        // This allows frontend login (localhost:8080) to work with gateway validation
+        jwtDecoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuerUri));
+
+        return jwtDecoder;
     }
 
-    private Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter() {
-        return jwt -> {
+    /**
+     * Extracts roles from Keycloak JWT and converts them to Spring Security authorities
+     */
+    private Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+            // Extract realm_access roles
             Map<String, Object> realmAccess = jwt.getClaim("realm_access");
             if (realmAccess != null && realmAccess.containsKey("roles")) {
                 @SuppressWarnings("unchecked")
                 List<String> roles = (List<String>) realmAccess.get("roles");
-                authorities = roles.stream()
+                authorities.addAll(roles.stream()
                         .map(this::mapRoleToAuthority)
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toList()));
             }
+
+            // Extract resource_access roles (optional)
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess != null) {
+                resourceAccess.forEach((resource, value) -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> resourceValue = (Map<String, Object>) value;
+                    if (resourceValue.containsKey("roles")) {
+                        @SuppressWarnings("unchecked")
+                        List<String> roles = (List<String>) resourceValue.get("roles");
+                        authorities.addAll(roles.stream()
+                                .map(this::mapRoleToAuthority)
+                                .collect(Collectors.toList()));
+                    }
+                });
+            }
+
             return authorities;
-        };
+        });
+
+        // Set principal claim to preferred_username
+        jwtAuthenticationConverter.setPrincipalClaimName("preferred_username");
+
+        return jwtAuthenticationConverter;
     }
 
+    /**
+     * Maps Keycloak roles to Spring Security authorities
+     */
     private GrantedAuthority mapRoleToAuthority(String role) {
+        // If role already has ROLE_ prefix, keep it
         if (role.startsWith("ROLE_")) {
             return new SimpleGrantedAuthority(role);
         }
+
+        // Skip Keycloak default roles
         if (role.startsWith("default-roles-") ||
                 role.equals("offline_access") ||
                 role.equals("uma_authorization")) {
             return new SimpleGrantedAuthority(role);
         }
+
+        // Add ROLE_ prefix for custom roles
         return new SimpleGrantedAuthority("ROLE_" + role);
     }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:3000",
-                "http://localhost:4173",
-                "http://frontend",
-                "http://frontend:80",
-                "http://host.docker.internal:5173",
-                "http://host.docker.internal:5174"
-        ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
 }
-
